@@ -16,39 +16,33 @@ r <- 3 # euclidean, manhattan, radius?
 p <- seq(0,1, by=0.05) # probability of copying solutions
 n_of_reps <- 20
 network_type = c("ring", "full")
-problem_type <- c("simple", "complex")
 
 # Euclidean distance
 d <-function(x,y){sqrt(sum((x-y)^2))}
 
-# Create landscape: simple and complex
-init_surface <- function(problem_type){
-  # Make a grid
-  S <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
 
-  # Create the payoffs (z)
-  if (problem_type == "simple") {
-    S <-S %>% rowwise() %>% mutate(z=(100-d(c(x,y),c(50,50)))^15) #Distance from (50,50) exponentiated
-    max_z <- max(S$z)
-    S <-S %>% mutate(z=(z/max_z) * 100) # Normalize
-    # %>% rowwise() %>% mutate(z=z+rnorm(1,sd=.05)) #Normalize and add noise 
-  } else {
-  # Read in payoffs from Matlab
-  library(R.matlab)
-  S<- S %>% add_column(z = as.vector(readMat('Surf.mat')$V))
-  }
-  # Label each point with a "type"
-  # For now types are randomly distributed. Later consider what happens when types are correlated in space
-  # i.e. certain areas of the space are better known to certain types
-  S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
-  return(S)
-}
+# # Make a grid
+S <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
 
-# Visualize both surfaces
-fig1 <-plot_ly(init_surface("simple"),x=~x,y=~y,z=~z,type="mesh3d")
-fig2 <-plot_ly(init_surface("complex"),x=~x,y=~y,z=~z,type="mesh3d") 
-fig1
-fig2
+##'[Replaced with Matlab output]##
+# # Create the payoffs (z)
+# S <-S %>% rowwise() %>% mutate(z=(100-d(c(x,y),c(50,50)))^8) #Distance from (50,50) exponentiated
+# max_z <- max(S$z)
+# S <-S %>% mutate(z=(z/max_z)) %>% rowwise() %>% mutate(z=z+rnorm(1,sd=.05)) #Normalize and add noise             
+##'[Replaced with Matlab output]##
+
+# Read in payoffs from mMtlab
+library(R.matlab)
+S<- S %>% add_column(z = as.vector(readMat('Surf.mat')$V))
+
+plot_ly(S,x=~x,y=~y,z=~z,type="mesh3d")
+
+
+# Label each point with a "type"
+# For now types are randomly distributed. Later consider what happens when types are correlated in space
+# i.e. certain areas of the space are better known to certain types
+
+S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
 
 
 # Create network
@@ -72,7 +66,6 @@ results<- data.frame(network = character(),
 
 # Simulation
 start_time <- Sys.time()
-S <- init_surface("complex")
 for (net in network_type){
   print(paste("network:", net))
   for (p_ in p){
@@ -181,7 +174,6 @@ cat("Run time:", end_time - start_time, "\n")
 #   ggplot()+
 #   geom_line(aes(x = p_level, y = avg_avg, colour=network, group = network))
 
-#### Figure 3: average and best performance by p on fully connected and ring networks ####
 results %>% 
   ggplot(aes(x = p_level, colour = network, group = network)) +
   geom_smooth(aes(y = avg_payoff, linetype = "Average Payoff"), se = FALSE) +
@@ -192,13 +184,6 @@ results %>%
     color = guide_legend(title = "Network Type"),
     linetype = guide_legend(title = "Line Type", override.aes = list(colour = c("black", "black")))
   )
-
-#### Figure 1: performance over time in simple vs. complex environments with p = 0 and p = 1 #### 
-
-### Simple fitness landscape with 0 noise ###
-
-S <- init_surface("complex")
-plot_ly(S,x=~x,y=~y,z=~z,type="mesh3d")   
 
 
 
