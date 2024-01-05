@@ -13,7 +13,7 @@ n_of_agents <-16
 n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
 p <- c(0,1) # probability of copying solutions
-n_of_reps <- 2
+n_of_reps <- 20
 network_type = c("ring", "full")
 problem_type <- c("simple", "complex")
 
@@ -200,6 +200,7 @@ results1<- data.frame(surface= character(),
                       tick_count = numeric(),
                       stringsAsFactors = T)
 
+
 start_time <- Sys.time()
 for (surf in problem_type){
   S <- init_surface(surf)
@@ -221,7 +222,20 @@ for (surf in problem_type){
         
         stop_condition <- FALSE
         tick <- 0
+        
         while (!stop_condition) {
+          # Update dataframe
+          results1 <- rbind(results1, 
+                            data.frame(surface= surf,
+                                       network=net,
+                                       p_level = p_,
+                                       rep_no = reps,
+                                       agent = 1:n_of_agents,
+                                       payoff = agents %>%
+                                          left_join(S, by = c("x", "y")) %>%
+                                          select(z),
+                                       tick_count = tick ))
+          
           print(paste("tick:", tick))
           # Initialize a logical vector to track whether each agent has options
           agents_have_options <- rep(TRUE, n_of_agents)
@@ -232,6 +246,7 @@ for (surf in problem_type){
             # For each agent
             agent <- agents[i,]
             current_payoff <- S %>% semi_join(agent, by = c("x", "y")) %>% pull(z)
+      
             # Draw a random number
             agent_p <- runif(1)
             # Gather the list of visible cells
@@ -248,13 +263,18 @@ for (surf in problem_type){
             # Sharing solutions (<= p)
             if (agent_p <= p_) {
               # visible_cells <- visible_cells + neighbors' current location
-              visible_cells <-distinct(rbind(visible_cells, agents[neighbors(network, i),] %>% 
-                                               select(x,y)))
+              visible_cells <-distinct(rbind(visible_cells, agents[neighbors(network, i), c("x", "y")])) 
             } else { # Sharing perspectives (> p)
               # visible_cells <- visible_cells + cells matching neighbors' type 
-              neighbor_type_matches <- S %>% 
-                filter(type %in% agents[neighbors(network, i),]$type & d(c(x,y), c(agent$x,agent$y)) < r) %>% 
-                select(x,y)
+              
+              # neighbor_type_matches <- S %>% 
+              #   filter(type %in% agents[neighbors(network, i),]$type & d(c(x,y), c(agent$x,agent$y)) < r) %>% 
+              #   select(x,y)
+              
+              neighbor_type_matches <- S %>%
+                semi_join(agents[neighbors(network, i), ], by = c("type")) %>%
+                filter(d(c(x, y), c(agent$x, agent$y)) < r) %>%
+                select(x, y)
               visible_cells <-distinct(rbind(visible_cells, neighbor_type_matches))
             }
             # Identify the cells with the highest payoff 
@@ -269,23 +289,12 @@ for (surf in problem_type){
               # Check which cell in the set has the highest z value
               candidates <- visible_payoffs[which(visible_payoffs$z == max(visible_payoffs$z)),]
               # Randomly pick one from the candidate list and move (update the main df)
-              agents[i, c("x", "y")] <- candidates %>% sample_n(1) %>% select(x, y)
+              agents[i, c("x", "y")] <- candidates[sample(nrow(candidates), 1), c("x", "y")]
             }
           }
-          # Update dataframe
-          results1 <- rbind(results1, 
-                           data.frame(surface= surf,
-                                      network=net,
-                                      p_level = p_,
-                                      rep_no = reps,
-                                      agent = 1:16,
-                                      payoff = agents %>%
-                                        left_join(S, by = c("x", "y")) %>%
-                                        select(z),
-                                      tick_count = tick ))
           
           # Check for equilibrium
-          if (all(!agents_have_options | tick > 50)) {
+          if (all(!agents_have_options) | tick > 50) {
             stop_condition <- TRUE
           } 
           tick <- tick + 1
@@ -296,5 +305,56 @@ for (surf in problem_type){
   }
 }
 end_time <- Sys.time()
-cat("Run time:", end_time - start_time, "\n")  
+cat("Run time:", end_time - start_time, "\n") 
+
+df1 <-results1 %>% group_by(surface, network, p_level, tick_count) %>% summarise(avg_payoff = mean(z))
+# number of distinct solutions fluctuate since not all reps last the same
+df2 <-results1 %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
+  summarise(count=n_distinct(z)) %>%
+  group_by(surface, network, p_level, tick_count) %>%
+  summarise(avg_count = mean(count))
+
+
+library(patchwork)
+# Plot Figure 1: Simple vs. Complex Landscapes - Avg Performance
+fig1_simple <- df1 %>% filter(surface=="simple") %>%
+  ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
+  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  labs(title = "Simple landscape", x = "Tick", y = "Average performance")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
+    )
+
+fig1_complex <- df1 %>% filter(surface=="complex") %>%
+  ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
+  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  labs(title = "Complex landscape", x = "Tick", y = "Average performance")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
+  )
+
+fig1_simple+fig1_complex
+
+# Plot Figure 2: Simple vs. Complex Landscapes - N of Unique Solutions
+fig2_simple <- df2 %>% filter(surface=="simple") %>%
+  ggplot(aes(x = tick_count, y = avg_count, group = interaction(network, p_level))) +
+  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  labs(title = "Simple landscape", x = "Tick", y = "Number of unique solutions")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
+  )
+
+fig2_complex <-df2 %>% filter(surface=="complex") %>%
+  ggplot(aes(x = tick_count, y = avg_count, group = interaction(network, p_level))) +
+  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  labs(title = "Complex landscape", x = "Tick", y = "Number of unique solutions")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
+  )
+
+fig2_simple+fig2_complex
 
