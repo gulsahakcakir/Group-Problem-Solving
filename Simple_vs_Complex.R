@@ -43,10 +43,10 @@ init_surface <- function(problem_type){
 }
 
 # Visualize both surfaces
-fig1 <-plot_ly(init_surface("simple"),x=~x,y=~y,z=~z,type="mesh3d")
-fig2 <-plot_ly(init_surface("complex"),x=~x,y=~y,z=~z,type="mesh3d") 
-fig1
-fig2
+plt1 <-plot_ly(init_surface("simple"),x=~x,y=~y,z=~z,type="mesh3d")
+plt2 <-plot_ly(init_surface("complex"),x=~x,y=~y,z=~z,type="mesh3d") 
+plt1
+plt2
 
 # Create network
 # For now fully_connected: "full", ring: "ring"
