@@ -182,7 +182,7 @@ res_upd <- expand_grid(surface = problem_type,
                    p_level = p, 
                    rep_no = 1:reps , 
                    agent = 1:n_of_agents , 
-                   tick_count = 1:max(results1$tick_count))
+                   tick_count = 0:max(results1$tick_count))
 res_upd<- left_join(res_upd, results1, by = c("surface", "network", "p_level","rep_no","agent","tick_count"))
 
 library(zoo)
@@ -224,7 +224,7 @@ fig1_simple+fig1_complex
 # Plot Figure 2: Simple vs. Complex Landscapes - N of Unique Solutions
 fig2_simple <- df2 %>% filter(surface=="simple") %>%
   ggplot(aes(x = tick_count, y = avg_count, group = interaction(network, p_level))) +
-  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Simple landscape", x = "Tick", y = "Number of unique solutions")+
   guides(
     color = guide_legend(title = "Network type"),
@@ -233,7 +233,7 @@ fig2_simple <- df2 %>% filter(surface=="simple") %>%
 
 fig2_complex <-df2 %>% filter(surface=="complex") %>%
   ggplot(aes(x = tick_count, y = avg_count, group = interaction(network, p_level))) +
-  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Complex landscape", x = "Tick", y = "Number of unique solutions")+
   guides(
     color = guide_legend(title = "Network type"),
