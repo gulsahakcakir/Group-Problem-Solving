@@ -13,7 +13,7 @@ n_of_agents <-16
 n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
 p <- c(0,1) # probability of copying solutions
-n_of_reps <- 20
+n_of_reps <- 50
 network_type = c("ring", "full")
 problem_type <- c("simple", "complex")
 
@@ -58,137 +58,6 @@ init_network <- function(n_of_agents, network_type) {
   }
 }
 
-
-results<- data.frame(network = character(),
-                     p_level = numeric(),
-                     rep_no = numeric(),
-                     max_perf = numeric(),
-                     avg_perf = numeric(),
-                     tick_count = numeric(),
-                     stringsAsFactors = T)
-
-# # Simulation
-# start_time <- Sys.time()
-# S <- init_surface("complex")
-# for (net in network_type){
-#   print(paste("network:", net))
-#   for (p_ in p){
-#     print(paste("p:", p_))
-#     for (reps in 1:n_of_reps){
-#       print(paste("rep:", reps))
-#       
-#       ##'[ Do I need pairwise comparison of network types with the same agent initializations?]## 
-#       network <- init_network(n_of_agents, net)
-#       
-#       # Create a set of agents with random types and initial positions
-#       agents <- data.frame(
-#         type = sample(1:n_of_types, size = n_of_agents, replace = TRUE),
-#         x = sample(1:grid_size, size = n_of_agents, replace = TRUE),
-#         y = sample(1:grid_size, size = n_of_agents, replace = TRUE)
-#       )
-#       
-#       stop_condition <- FALSE
-#       tick <- 0
-#       while (!stop_condition) {
-#         print(paste("tick:", tick))
-#         # Initialize a logical vector to track whether each agent has options
-#         agents_have_options <- rep(TRUE, n_of_agents)
-#         
-#         update_order <- sample(1:n_of_agents)
-#         for (i in update_order){
-#           #print(paste("agent:", i))
-#           # For each agent
-#           agent <- agents[i,]
-#           current_payoff <- S %>% semi_join(agent, by = c("x", "y")) %>% pull(z)
-#           # Draw a random number
-#           agent_p <- runif(1)
-#           # Gather the list of visible cells
-#           visible_cells <- distinct(
-#             rbind(
-#               # Adjacent cells 
-#               expand.grid(x = max(1, agent$x - 1):min(grid_size, agent$x + 1),
-#                           y = max(1, agent$y - 1):min(grid_size, agent$y + 1)),
-#               
-#               ##'[ Do we wanna wrap the grid ? ]## 
-#               # expand.grid(
-#               #   x = seq(agent$x - 1, agent$x + 1) %% grid_size + 1,
-#               #   y = seq(agent$y - 1, agent$y + 1) %% grid_size + 1
-#               # )
-#               
-#               # Cells of the same type within distance r (euclidean for now)
-#               S %>% 
-#                 filter(type == agent$type & d(c(x,y), c(agent$x,agent$y)) < r) %>% 
-#                 dplyr::select(x, y) ))
-#           # Sharing solutions (<= p)
-#           if (agent_p <= p_) {
-#             # visible_cells <- visible_cells + neighbors' current location
-#             visible_cells <-distinct(rbind(visible_cells, agents[neighbors(network, i),] %>% 
-#                                              select(x,y)))
-#           } else { # Sharing perspectives (> p)
-#             # visible_cells <- visible_cells + cells matching neighbors' type 
-#             neighbor_type_matches <- S %>% 
-#               filter(type %in% agents[neighbors(network, i),]$type & d(c(x,y), c(agent$x,agent$y)) < r) %>% 
-#               select(x,y)
-#             visible_cells <-distinct(rbind(visible_cells, neighbor_type_matches))
-#           }
-#           # Identify the cells with the highest payoff 
-#           
-#           # create a list of candidate points (payoff must be larger than current location)
-#           visible_payoffs <- S %>% semi_join(visible_cells, by = c("x", "y")) %>% filter(z > current_payoff)
-#           
-#           # Check if candidates list is empty for the current agent
-#           if (nrow(visible_payoffs) == 0) {
-#             agents_have_options[i] <- FALSE
-#           } else {
-#             # Check which cell in the set has the highest z value
-#             candidates <- visible_payoffs[which(visible_payoffs$z == max(visible_payoffs$z)),]
-#             # Randomly pick one from the candidate list and move (update the main df)
-#             agents[i, c("x", "y")] <- candidates %>% sample_n(1) %>% select(x, y)
-#           }
-#         }
-#         
-#         # Check for equilibrium
-#         if (all(!agents_have_options)) {
-#           stop_condition <- TRUE
-#         }
-#         tick <- tick + 1
-#         
-#       }
-#       # Report average payoff and convergence time
-#       results <- rbind(results, 
-#                        data.frame(network=net,
-#                                   p_level = p_,
-#                                   rep_no = reps,
-#                                   agents %>%
-#                                     left_join(S, by = c("x", "y")) %>%
-#                                     select(x, y, z) %>% 
-#                                     summarize(avg_payoff= mean(z),
-#                                               max_payoff= max(z)),
-#                                   tick_count = tick ))
-#     }
-#   }
-# }
-# end_time <- Sys.time()
-# cat("Run time:", end_time - start_time, "\n")
-# 
-# ##'[ Should update be synchronous or asynchronous? ]##
-# 
-# # results %>% group_by(network, p_level) %>% summarize(avg_avg = mean(avg_payoff),
-# #                                                      avg_max = mean(max_payoff))%>%
-# #   ggplot()+
-# #   geom_line(aes(x = p_level, y = avg_avg, colour=network, group = network))
-# 
-# #### Figure 3: average and best performance by p on fully connected and ring networks ####
-# results %>% 
-#   ggplot(aes(x = p_level, colour = network, group = network)) +
-#   geom_smooth(aes(y = avg_payoff, linetype = "Average Payoff"), se = FALSE) +
-#   geom_smooth(aes(y = max_payoff, linetype = "Max Payoff"), se = FALSE) +
-#   scale_color_manual(values = c("blue", "red")) +
-#   scale_linetype_manual(name = "Line Type", values = c("solid", "dotted")) +
-#   guides(
-#     color = guide_legend(title = "Network Type"),
-#     linetype = guide_legend(title = "Line Type", override.aes = list(colour = c("black", "black")))
-#   )
 
 #### Figure 1: performance over time in simple vs. complex environments with p = 0 and p = 1 #### 
 results1<- data.frame(surface= character(),
@@ -307,9 +176,24 @@ for (surf in problem_type){
 end_time <- Sys.time()
 cat("Run time:", end_time - start_time, "\n") 
 
-df1 <-results1 %>% group_by(surface, network, p_level, tick_count) %>% summarise(avg_payoff = mean(z))
+## fixing early drop out issue ##
+res_upd <- expand_grid(surface = problem_type, 
+                   network = network_type, 
+                   p_level = p, 
+                   rep_no = 1:reps , 
+                   agent = 1:n_of_agents , 
+                   tick_count = 1:max(results1$tick_count))
+res_upd<- left_join(res_upd, results1, by = c("surface", "network", "p_level","rep_no","agent","tick_count"))
+
+library(zoo)
+res_upd <- res_upd %>%
+  mutate_all(na.locf)
+
+df1 <-res_upd %>% group_by(surface, network, p_level, tick_count) %>% 
+  summarise(avg_payoff = mean(z),
+            max_payoff = max(z))
 # number of distinct solutions fluctuate since not all reps last the same
-df2 <-results1 %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
+df2 <-res_upd %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
   summarise(count=n_distinct(z)) %>%
   group_by(surface, network, p_level, tick_count) %>%
   summarise(avg_count = mean(count))
@@ -319,16 +203,16 @@ library(patchwork)
 # Plot Figure 1: Simple vs. Complex Landscapes - Avg Performance
 fig1_simple <- df1 %>% filter(surface=="simple") %>%
   ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
-  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Simple landscape", x = "Tick", y = "Average performance")+
   guides(
     color = guide_legend(title = "Network type"),
     linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
     )
 
-fig1_complex <- df1 %>% filter(surface=="complex") %>%
+fig1_complex <- df1%>% filter(surface=="complex") %>%
   ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
-  geom_smooth(aes(color=network, linetype = as.factor(p_level)), se = F)+
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Complex landscape", x = "Tick", y = "Average performance")+
   guides(
     color = guide_legend(title = "Network type"),
