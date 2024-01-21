@@ -190,9 +190,13 @@ library(zoo)
 res_upd <- res_upd %>%
   mutate_all(na.locf)
 
-df1 <-res_upd %>% group_by(surface, network, p_level, tick_count) %>% 
+df1 <-res_upd %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
   summarise(avg_payoff = mean(z),
-            max_payoff = max(z))
+            max_payoff = max(z)) %>%
+  group_by(surface, network, p_level, tick_count) %>%
+  summarise(avg_avg_payoff = mean(avg_payoff),
+            avg_max_payoff = mean(max_payoff),
+            max_max_payoff = max(max_payoff))
 
 df2 <-res_upd %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
   summarise(count=n_distinct(z)) %>%
@@ -201,9 +205,9 @@ df2 <-res_upd %>% group_by(surface, network, p_level, tick_count, rep_no) %>%
 
 
 library(patchwork)
-# Plot Figure 1: Simple vs. Complex Landscapes - Avg Performance
-fig1_simple <- df1 %>% filter(surface=="simple") %>%
-  ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
+# Plot Figure 1a: Simple vs. Complex Landscapes - Avg Performance
+fig1a_simple <- df1 %>% filter(surface=="simple") %>%
+  ggplot(aes(x = tick_count, y = avg_avg_payoff, group = interaction(network, p_level))) +
   geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Simple landscape", x = "Tick", y = "Average performance")+
   guides(
@@ -211,15 +215,55 @@ fig1_simple <- df1 %>% filter(surface=="simple") %>%
     linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))+
   theme(legend.position="none")
 
-fig1_complex <- df1%>% filter(surface=="complex") %>%
-  ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
+fig1a_complex <- df1%>% filter(surface=="complex") %>%
+  ggplot(aes(x = tick_count, y = avg_avg_payoff, group = interaction(network, p_level))) +
   geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Complex landscape", x = "Tick", y = "Average performance")+
   scale_color_discrete( name = "Network type", labels = c("Fully connected", "Linear"))+
   guides(
     linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))
 
-fig1_simple+fig1_complex
+fig1a_simple+fig1a_complex
+
+# Plot Figure 1b: Simple vs. Complex Landscapes - Average Max Performance
+fig1b_simple <- df1 %>% filter(surface=="simple") %>%
+  ggplot(aes(x = tick_count, y = avg_max_payoff, group = interaction(network, p_level))) +
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
+  labs(title = "Simple landscape", x = "Tick", y = "Max performance (average)")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))+
+  theme(legend.position="none")
+
+fig1b_complex <- df1%>% filter(surface=="complex") %>%
+  ggplot(aes(x = tick_count, y = avg_max_payoff, group = interaction(network, p_level))) +
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
+  labs(title = "Complex landscape", x = "Tick", y = "Max performance (average)")+
+  scale_color_discrete( name = "Network type", labels = c("Fully connected", "Linear"))+
+  guides(
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))
+
+fig1b_simple+fig1b_complex
+
+# Plot Figure 1c: Simple vs. Complex Landscapes - Maximum Max Performance
+fig1c_simple <- df1 %>% filter(surface=="simple") %>%
+  ggplot(aes(x = tick_count, y = max_max_payoff, group = interaction(network, p_level))) +
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
+  labs(title = "Simple landscape", x = "Tick", y = "Max performance (max)")+
+  guides(
+    color = guide_legend(title = "Network type"),
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))+
+  theme(legend.position="none")
+
+fig1c_complex <- df1%>% filter(surface=="complex") %>%
+  ggplot(aes(x = tick_count, y = max_max_payoff, group = interaction(network, p_level))) +
+  geom_line(aes(color=network, linetype = as.factor(p_level)))+
+  labs(title = "Complex landscape", x = "Tick", y = "Max performance (max)")+
+  scale_color_discrete( name = "Network type", labels = c("Fully connected", "Linear"))+
+  guides(
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))
+
+fig1c_simple+fig1c_complex
 
 # Plot Figure 2: Simple vs. Complex Landscapes - N of Unique Solutions
 fig2_simple <- df2 %>% filter(surface=="simple") %>%
