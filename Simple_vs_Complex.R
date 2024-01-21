@@ -12,8 +12,8 @@ grid_size <-100
 n_of_agents <-16
 n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
-p <- c(0,1) # probability of copying solutions
-n_of_reps <- 50
+p <- c(0.1,0.9) # probability of copying solutions
+n_of_reps <- 20
 network_type = c("ring", "full")
 problem_type <- c("simple", "complex")
 
@@ -185,6 +185,7 @@ res_upd <- expand_grid(surface = problem_type,
                    tick_count = 0:max(results1$tick_count))
 res_upd<- left_join(res_upd, results1, by = c("surface", "network", "p_level","rep_no","agent","tick_count"))
 
+# fill all NAs with the last non-NA value
 library(zoo)
 res_upd <- res_upd %>%
   mutate_all(na.locf)
@@ -192,7 +193,7 @@ res_upd <- res_upd %>%
 df1 <-res_upd %>% group_by(surface, network, p_level, tick_count) %>% 
   summarise(avg_payoff = mean(z),
             max_payoff = max(z))
-# number of distinct solutions fluctuate since not all reps last the same
+
 df2 <-res_upd %>% group_by(surface, network, p_level, tick_count, rep_no) %>% 
   summarise(count=n_distinct(z)) %>%
   group_by(surface, network, p_level, tick_count) %>%
@@ -207,17 +208,16 @@ fig1_simple <- df1 %>% filter(surface=="simple") %>%
   labs(title = "Simple landscape", x = "Tick", y = "Average performance")+
   guides(
     color = guide_legend(title = "Network type"),
-    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
-    )
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))+
+  theme(legend.position="none")
 
 fig1_complex <- df1%>% filter(surface=="complex") %>%
   ggplot(aes(x = tick_count, y = avg_payoff, group = interaction(network, p_level))) +
   geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Complex landscape", x = "Tick", y = "Average performance")+
+  scale_color_discrete( name = "Network type", labels = c("Fully connected", "Linear"))+
   guides(
-    color = guide_legend(title = "Network type"),
-    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
-  )
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))
 
 fig1_simple+fig1_complex
 
@@ -228,17 +228,16 @@ fig2_simple <- df2 %>% filter(surface=="simple") %>%
   labs(title = "Simple landscape", x = "Tick", y = "Number of unique solutions")+
   guides(
     color = guide_legend(title = "Network type"),
-    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
-  )
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))+
+  theme(legend.position="none")
 
 fig2_complex <-df2 %>% filter(surface=="complex") %>%
   ggplot(aes(x = tick_count, y = avg_count, group = interaction(network, p_level))) +
   geom_line(aes(color=network, linetype = as.factor(p_level)))+
   labs(title = "Complex landscape", x = "Tick", y = "Number of unique solutions")+
+  scale_color_discrete( name = "Network type", labels = c("Fully connected", "Linear"))+
   guides(
-    color = guide_legend(title = "Network type"),
-    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black")))
-  )
+    linetype = guide_legend(title = "Strategy", override.aes = list(colour = c("black", "black"))))
 
 fig2_simple+fig2_complex
 
