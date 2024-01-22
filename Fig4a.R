@@ -13,7 +13,7 @@ grid_size <-100
 n_of_agents <-16
 n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
-p <- c(0.25, 0.75) # probability of copying solutions
+p <- c(0.1, 0.9) # probability of copying solutions
 n_of_reps <- 50
 network_type = c("ring", "full", LETTERS[1:8])
 MW<- unlist(as.vector(readMat("~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/L8.mat")$L))
@@ -156,52 +156,102 @@ cat("Run time:", end_time - start_time, "\n")
 
 results <- results %>% mutate(category = ifelse(network %in% c("A","B","C","D","full"), "efficient", "inefficient"))
 
-fig4_0 <- results %>% filter(p_level == 0.25) %>%
-  ggplot(aes(x = network, y = avg_payoff, color=category)) +
-  geom_boxplot(position = "dodge") +
-  scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green"))+
-
-
-
-fig4_1 <- results %>% filter(p_level == 0.75) %>%
+####### Boxplot of all data ########
+fig4_1 <- results %>% filter(p_level == 0.1) %>%
   ggplot(aes(x = network, y = avg_payoff, color=category)) +
   geom_boxplot(position = "dodge") +
   scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
-  labs(title = "Sharing perspectives (p=0.75)",
+  labs(title = "Sharing solutions (p=0.1)",
        x = "Network type",
        y = "Average payoff",
-       color = "Efficiency Category")
+       color = "Efficiency Category")+
+  theme(legend.position = "none")
 
-fig4_0+fig4_1
-
-summary_df <- results %>% group_by(network, p_level) %>% summarise(avg_avg = mean(avg_payoff),
-                                                     se_avg = sd(avg_payoff)/sqrt(n_of_reps)) %>%  
-  mutate(category = ifelse(network %in% c("A","B","C","D","full"), "efficient", "inefficient"))
-
-fig4_025 <- summary_df %>% filter(p_level == 0.25) %>%
-    ggplot(aes(x = network, y = avg_avg, color=category)) +
-    geom_point()+
-    geom_errorbar(aes(ymin = avg_avg - 2 * se_avg, ymax = avg_avg + 2 * se_avg),
-                  position = position_dodge(width = 0.3),
-                  width = 0.2)+
+fig4_9 <- results %>% filter(p_level == 0.9) %>%
+  ggplot(aes(x = network, y = avg_payoff, color=category)) +
+  geom_boxplot(position = "dodge") +
   scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
-    labs(title = "p=0.25",
+  labs(title = "Sharing perspectives (p=0.9)",
        x = "Network type",
-       y = "Average payoff") +
+       y = "Average payoff",
+       color = "Efficiency Category")+
     theme(legend.position = "none")
 
-fig4_075 <- summary_df %>% filter(p_level == 0.75) %>%
+fig4_1+fig4_9
+
+######### Figure 4a ############
+category_order <- c("efficient", "inefficient")
+network_order <- c("full", "A", "B", "C", "D", "E", "F", "G", "H", "ring")
+
+summary_df <- results %>% group_by(network, p_level) %>% 
+  summarise(avg_avg = mean(avg_payoff),
+            se_avg = sd(avg_payoff)/sqrt(n_of_reps),
+            avg_max = mean(max_payoff),
+            se_max = sd(max_payoff)/sqrt(n_of_reps)) %>%  
+  mutate(category = ifelse(network %in% c("full","A","B","C","D"), "efficient", "inefficient"),
+         network = factor(network, levels = network_order),
+         category = factor(category, levels = category_order)) 
+
+## Fig4a_avg: average payoff by each network
+fig4est_1 <- summary_df %>% filter(p_level == 0.1) %>%
+  arrange(category) %>%
   ggplot(aes(x = network, y = avg_avg, color=category)) +
   geom_point()+
   geom_errorbar(aes(ymin = avg_avg - 2 * se_avg, ymax = avg_avg + 2 * se_avg),
                 position = position_dodge(width = 0.3),
                 width = 0.2)+
+  ylim(35,70)+
   scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
-  labs(title = "p=0.75",
+  labs(title = "p=0.1",
+     x = "Network type",
+     y = "Average payoff") +
+  theme(legend.position = "none")
+
+fig4est_9 <- summary_df %>% filter(p_level == 0.9) %>%
+  arrange(category) %>%
+  ggplot(aes(x = network, y = avg_avg, color=category)) +
+  geom_point()+
+  geom_errorbar(aes(ymin = avg_avg - 2 * se_avg, ymax = avg_avg + 2 * se_avg),
+                position = position_dodge(width = 0.3),
+                width = 0.2)+
+  ylim(35,70)+
+  scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
+  labs(title = "p=0.9",
        x = "Network type",
        y = "Average payoff",
        color = "Efficiency Category")
     
-fig4_025 + fig4_075  
-  
+fig4est_1 + fig4est_9
+
+## Fig4a_max: maximum payoff by each network
+
+fig4max_1 <- summary_df %>% filter(p_level == 0.1) %>%
+  arrange(category) %>%
+  ggplot(aes(x = network, y = avg_max, color=category)) +
+  geom_point()+
+  geom_errorbar(aes(ymin = avg_max - 2 * se_max, ymax = avg_max + 2 * se_max),
+                position = position_dodge(width = 0.3),
+                width = 0.2)+
+  ylim(42,75)+
+  scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
+  labs(title = "p=0.1",
+       x = "Network type",
+       y = "Max payoff") +
+  theme(legend.position = "none")
+
+fig4max_9 <- summary_df %>% filter(p_level == 0.9) %>%
+  arrange(category) %>%
+  ggplot(aes(x = network, y = avg_max, color=category)) +
+  geom_point()+
+  geom_errorbar(aes(ymin = avg_max - 2 * se_max, ymax = avg_max + 2 * se_max),
+                position = position_dodge(width = 0.3),
+                width = 0.2)+
+  ylim(42,75)+
+  scale_color_manual(values = c("efficient" = "orange", "inefficient" = "light green")) +
+  labs(title = "p=0.9",
+       x = "Network type",
+       y = "Max payoff",
+       color = "Efficiency Category")
+
+fig4max_1 + fig4max_9  
 
