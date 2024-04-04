@@ -13,7 +13,7 @@ n_of_agents <-16
 n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
 p <- c(0.1,0.9) # probability of copying solutions
-n_of_reps <- 20
+n_of_reps <- 50
 t <- 1 # time stuck for stop condition
 network_type = c("ring", "full")
 problem_type <- c("simple", "complex")
