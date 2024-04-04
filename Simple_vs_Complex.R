@@ -14,6 +14,7 @@ n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
 p <- c(0.1,0.9) # probability of copying solutions
 n_of_reps <- 20
+t <- 1 # time stuck for stop condition
 network_type = c("ring", "full")
 problem_type <- c("simple", "complex")
 
@@ -23,23 +24,23 @@ d <-function(x,y){sqrt(sum((x-y)^2))}
 # Create landscape: simple and complex
 init_surface <- function(problem_type){
   # Make a grid
-  S <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
+  Surf <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
   
   # Create the payoffs (z)
   if (problem_type == "simple") {
-    S <-S %>% rowwise() %>% mutate(z=(100-d(c(x,y),c(50,50)))^15) #Distance from (50,50) exponentiated
-    max_z <- max(S$z)
-    S <-S %>% mutate(z=(z/max_z) * 100) # Normalize
+    Surf <-Surf %>% rowwise() %>% mutate(z=(100-d(c(x,y),c(50,50)))^15) #Distance from (50,50) exponentiated
+    max_z <- max(Surf$z)
+    Surf <-Surf %>% mutate(z=(z/max_z) * 100) # Normalize
     # %>% rowwise() %>% mutate(z=z+rnorm(1,sd=.05)) #Normalize and add noise 
   } else {
     # Read in payoffs from Matlab
-    S<- S %>% add_column(z = as.vector(readMat('~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/Surf.mat')$V))
+    Surf <- Surf %>% add_column(z = as.vector(readMat('~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/Surf.mat')$V))
   }
   # Label each point with a "type"
   # For now types are randomly distributed. Later consider what happens when types are correlated in space
   # i.e. certain areas of the space are better known to certain types
-  S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
-  return(S)
+  #S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
+  return(Surf)
 }
 
 # Visualize both surfaces
@@ -72,16 +73,16 @@ results1<- data.frame(surface= character(),
 
 start_time <- Sys.time()
 for (surf in problem_type){
-  S <- init_surface(surf)
   print(paste("surface:", surf))
   for (net in network_type){
-    network <- init_network(n_of_agents, net)
     print(paste("network:", net))
     for (p_ in p){
       print(paste("p:", p_))
       for (reps in 1:n_of_reps){
         print(paste("rep:", reps))
         
+        Surf <- init_surface(surf)
+        network <- init_network(n_of_agents, net)
         # Create a set of agents with random types and initial positions
         agents <- data.frame(
           type = sample(1:n_of_types, size = n_of_agents, replace = TRUE),
@@ -89,8 +90,12 @@ for (surf in problem_type){
           y = sample(1:grid_size, size = n_of_agents, replace = TRUE)
         )
         
+        # Label each point on S with a "type"
+        S <- Surf %>% add_column(type=sample(1:n_of_types,size=dim(Surf)[1],replace=TRUE))
+        
         stop_condition <- FALSE
         tick <- 0
+        ts <- 0
         
         while (!stop_condition) {
           # Update dataframe
@@ -164,8 +169,15 @@ for (surf in problem_type){
           
           # Check for equilibrium
           if (all(!agents_have_options) | tick > 50) {
-            stop_condition <- TRUE
-          } 
+            ts <- ts + 1
+            if (ts == t){
+              stop_condition <- TRUE
+            }
+          }
+          else{
+            ts <- 0
+          }
+          
           tick <- tick + 1
           
         }
