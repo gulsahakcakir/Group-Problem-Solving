@@ -15,6 +15,7 @@ n_of_types <-10
 r <- 3 # euclidean, manhattan, radius?
 p <- c(0.1, 0.9) # probability of copying solutions
 n_of_reps <- 50
+t <- 1
 network_type = c("ring", "full", LETTERS[1:8])
 MW<- unlist(as.vector(readMat("~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/L8.mat")$L))
 
@@ -22,15 +23,15 @@ MW<- unlist(as.vector(readMat("~/Library/CloudStorage/Box-Box/gulsah/Teams (lamb
 d <-function(x,y){sqrt(sum((x-y)^2))}
 
 # Make a grid
-S <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
+Surf <-tibble(expand.grid(x=c(1:grid_size),y=c(1:grid_size)))
 
 # Read in payoffs from Matlab
-S<- S %>% add_column(z = as.vector(readMat("~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/Surf.mat")$V))
+Surf <- Surf %>% add_column(z = as.vector(readMat("~/Library/CloudStorage/Box-Box/gulsah/Teams (lamberson@ucla.edu)/Simple Model/Surf.mat")$V))
 
 # Label each point with a "type"
 # For now types are randomly distributed. Later consider what happens when types are correlated in space
 # i.e. certain areas of the space are better known to certain types
-S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
+#S <- S %>% add_column(type=sample(1:n_of_types,size=dim(S)[1],replace=TRUE))
 
 # Visualize 
 plot_ly(S,x=~x,y=~y,z=~z,type="mesh3d")
@@ -73,9 +74,12 @@ for (net in network_type){
         x = sample(1:grid_size, size = n_of_agents, replace = TRUE),
         y = sample(1:grid_size, size = n_of_agents, replace = TRUE)
       )
+      # Label each point on S with a "type"
+      S <- Surf %>% add_column(type=sample(1:n_of_types,size=dim(Surf)[1],replace=TRUE))
       
       stop_condition <- FALSE
       tick <- 0
+      ts <- 0
       while (!stop_condition) {
         print(paste("tick:", tick))
         # Initialize a logical vector to track whether each agent has options
@@ -131,8 +135,15 @@ for (net in network_type){
         
         # Check for equilibrium
         if (all(!agents_have_options)) {
-          stop_condition <- TRUE
+          ts <- ts + 1
+          if (ts == t){
+            stop_condition <- TRUE
+          }
         }
+        else{
+          ts <- 0
+        }
+        
         tick <- tick + 1
         
       }
