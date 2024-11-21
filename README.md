@@ -1,2 +1,3 @@
 # Group-Problem-Solving
- repo for research project
+Simulation scripts and data for Akcakir et al. (in prep)
+
