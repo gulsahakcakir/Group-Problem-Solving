@@ -1,3 +1,3 @@
 # Group-Problem-Solving
-Simulation scripts and data for Akcakir et al. (in prep)
+Code and data for Akcakir et al. (in prep)
 
