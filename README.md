@@ -1,2 +1,3 @@
 # Group-Problem-Solving
- repo for research project
+Code and data for Akcakir et al. (in prep)
+
