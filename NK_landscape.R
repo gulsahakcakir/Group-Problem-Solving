@@ -1,4 +1,31 @@
+
+library(tidyverse)
+#library(plotly)
+library(dplyr)
+library(ggplot2)
+library(igraph)
+library(R.matlab)
+library(purrr)
+#library(patchwork)
+library(akima)
+library(parallel)
 library(gtools)
+
+# Set the number of cores to the value of NSLOTS provided by the job scheduler
+num_cores <- as.integer(Sys.getenv("NSLOTS"))
+
+# If NSLOTS is not set, default to 1 core (when testing locally)
+if (is.na(num_cores) || num_cores < 1) num_cores <- 1
+
+init_network <- function(n_of_agents, network_type) {
+  if (network_type == "full") {
+    return(make_full_graph(n_of_agents))
+  } else if (network_type == "ring") {
+    return(make_ring(n_of_agents,circular=FALSE))
+  } else {
+    return(graph_from_adjacency_matrix(MW[[match(network_type, LETTERS[1:8])]], mode = "undirected"))
+  }
+}
 ############################### NK landscapes ##################################
 # Function to create NK landscape as implemented by Barkoczi and Galesic
 NK<-function(N,K,LS,fitness,depends){
@@ -179,8 +206,9 @@ simulateNK <- function(network_type, p_,  n_of_reps, n_of_agents, n_of_types, Su
       
       for (i in update_order) {
         agent <- agents[i,]
+        agent_index <- agent$Index
         #current_payoff <- S %>% semi_join(agent, by = c("x", "y")) %>% pull(z)
-        current_payoff <- as.numeric(S[agent$Index == S$Index, "fitness"])
+        current_payoff <- as.numeric(S[agent_index == S$Index, "fitness"])
         agent_p <- runif(1)
         
         visible_solutions <- baseline_visible(agent, S, hamming1_neighbors, N, r)
@@ -246,12 +274,12 @@ simulateNK <- function(network_type, p_,  n_of_reps, n_of_agents, n_of_types, Su
 
 #################################### Fig 3 #####################################
 # Parameters
-n_of_agents <-16
-n_of_types <-10
+n_of_agents <- 16
+n_of_types <- 10
 r <- 3 # euclidean, manhattan, radius?
 p <- seq(0,1, by=0.1) # probability of copying solutions
-n_of_reps <- 50
-t <- 10 # time stuck for stop condition or time limit for all sims if timeLimit=TRUE
+n_of_reps <- 5
+t <- 1 # time stuck for stop condition or time limit for all sims if timeLimit=TRUE
 network_type = c("ring", "full")
 problem_type <-  "complex"
 
@@ -269,7 +297,7 @@ Surf$neighbors1 <- hamming1_neighbors # a list
 cond <- expand_grid(network_type, p) # all possible network-p combinations
 start_time <- Sys.time()
 results <- map2_df(cond$network_type, cond$p, 
-                   ~simulateNK(.x, .y, n_of_reps, n_of_agents, n_of_types, Surf, dist_matrix, r, t,randomSurface=TRUE,timeLimit=TRUE))
+                   ~simulateNK(.x, .y, n_of_reps, n_of_agents, n_of_types, Surf, dist_matrix, r, t,randomSurface=TRUE,timeLimit=FALSE))
 end_time <- Sys.time()
 
 cat("Run time:", end_time - start_time, "\n") 
