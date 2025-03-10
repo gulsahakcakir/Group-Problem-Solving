@@ -35,19 +35,20 @@ source("scripts/simulation_func.R")
 # Main function is simulate(network_type, p_,  n_of_reps, n_of_agents, n_of_types, distance_matrix, r, t,timeLimit=FALSE,trackHistory=FALSE,problem_type='complex')
 
 
-# Parameters for over time plots
-n_of_agents = 16
-n_of_types = 100
-r = 6
-p = c(0, 0.1, 0.9, 1, 99)
-n_of_reps = 1000
-t = 1
-network_type = "full"
-problem_type = "simple" # should't this be c("simple", "complex")
-timeLimit = FALSE
-trackHistory = TRUE
-timeFirstCopy <- NA
-title = "overTime"
+# Parameters for collaborate first plot
+n_of_agents <-16
+n_of_types <-100
+r <- 6
+p <- c(0)
+n_of_reps <- 5
+t <- 10
+network_type <- c("ring", "full")
+problem_type <-  "complex"
+timeLimit<-TRUE
+trackHistory<-FALSE
+title <- "collaborateFirst"
+collaborateFirst <- TRUE
+timeFirstCopy <- c(0:11)
 
 
 # Compute distances
@@ -72,14 +73,15 @@ results_list <- mclapply(1:nrow(comb2), function(i) {
            t = t,
            timeLimit = timeLimit,
            trackHistory = trackHistory,
-           problem_type = row$problems)
+           problem_type = row$problems,
+           collaborateFirst = collaborateFirst,
+           timeFirstCopy = row$copyTimes)
 }, mc.cores = num_cores)
 
-results_t <- bind_rows(results_list)
+results_c <- bind_rows(results_list)
 
 
 #remove JOBID part --> if not running in batches
-save(results_t, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
-
+save(results_c, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
 
 

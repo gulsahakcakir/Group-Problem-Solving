@@ -28,7 +28,7 @@ simulate <- function(network_type, p_,  n_of_reps, n_of_agents, n_of_types, dist
     r_seed <- sample.int(.Machine$integer.max, 1)
     set.seed(r_seed)
     
-    # Generate a random surface using the Mason and Watts algorithim
+    # Generate a random surface using the Mason and Watts algorithm
     if(problem_type=='complex'){
       Surf <- MasonWatts(100)
     }

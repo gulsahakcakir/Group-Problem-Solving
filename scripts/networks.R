@@ -1,7 +1,4 @@
 
-
-
-
 # Function to add n random edges without creating duplicates
 add_random_edges <- function(g, n){
   for (i in 1:n) {
@@ -29,7 +26,6 @@ add_random_edges <- function(g, n){
 
 
 # Create network 
-##'[ Exponent chosen (for simple) affects the scale of initial payoffs which in turn impacts the time until convergence ]##
 init_network <- function(n_of_agents, network_type) {
   # if network_type is numeric then start with a linear network and add network_type random edges
   # network_type is the number of additional edges
