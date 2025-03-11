@@ -241,7 +241,6 @@ results_summary <- results %>% group_by(network, timeFirstCopy, rep_no) %>%
 
 
 # Figure 7: # of rounds of collaboration x Network structure - Avg and Max Performances
-
 collabFirstMax <- results_summary %>%
   ggplot(aes(x = timeFirstCopy, y = avg_max_payoff, colour = network, group = network)) +
   geom_line() +
@@ -255,11 +254,11 @@ collabFirstMax <- results_summary %>%
   scale_x_continuous(breaks = seq(0, t, by = 2),limits=c(0,t))+
   guides(color = "none")+
   theme(legend.position = "none")+ 
-  labs(#title = paste("r =",results[1,]$r,"   types =",results[1,]$n_of_types), 
+  labs(
     x = "Rounds of collaboration (k)", 
     y= "Best member payoff")+
-  theme_classic()+
-  theme(axis.text.y = element_text(margin = margin(r = 8)))
+  theme_classic()#+
+  #theme(axis.text.y = element_text(margin = margin(r = 8)))
 
 collabFirstAve <- results_summary %>%
   ggplot(aes(x = timeFirstCopy, y = avg_avg_payoff, colour = network, group = network)) +
@@ -274,7 +273,7 @@ collabFirstAve <- results_summary %>%
   scale_x_continuous(breaks = seq(0, t, by = 2),limits=c(0,t))+
   guides(color = guide_legend(title = "Network"))+ 
   #theme(legend.position = "none")+ 
-  labs(#title = paste("r =",results[1,]$r,"   types =",results[1,]$n_of_types), 
+  labs(
     x = "Rounds of collaboration (k)", 
     y= "Average payoff")+
   theme_classic()+
