@@ -251,14 +251,14 @@ collabFirstMax <- results_summary %>%
                     ymax = avg_max_payoff + se_max_payoff),
                 width=0)+
   scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
-  scale_x_continuous(breaks = seq(0, t, by = 2),limits=c(0,t))+
+  scale_x_continuous(breaks = seq(0, 10, by = 2),limits=c(0,10))+
   guides(color = "none")+
   theme(legend.position = "none")+ 
   labs(
     x = "Rounds of collaboration (k)", 
     y= "Best member payoff")+
-  theme_classic()#+
-  #theme(axis.text.y = element_text(margin = margin(r = 8)))
+  theme_classic()+
+  theme(axis.text.y = element_text(margin = margin(r = 8)))
 
 collabFirstAve <- results_summary %>%
   ggplot(aes(x = timeFirstCopy, y = avg_avg_payoff, colour = network, group = network)) +
@@ -270,7 +270,7 @@ collabFirstAve <- results_summary %>%
                     ymax = avg_avg_payoff + se_avg_payoff),
                 width=0)+
   scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
-  scale_x_continuous(breaks = seq(0, t, by = 2),limits=c(0,t))+
+  scale_x_continuous(breaks = seq(0, 10, by = 2),limits=c(0,10))+
   guides(color = guide_legend(title = "Network"))+ 
   #theme(legend.position = "none")+ 
   labs(
