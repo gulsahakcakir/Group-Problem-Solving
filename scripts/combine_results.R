@@ -10,10 +10,10 @@ combine_results <- function(data_dir, files_pattern, batch_size = 50) {
     load(files[i])  # Load each file in sequence
     
     # Modify 'rep_no' column to reflect the replication number incrementally
-    results <- results %>% mutate(rep_no = rep_no + (i - 1) * batch_size)
+    results_t <- results_t %>% mutate(rep_no = rep_no + (i - 1) * batch_size)
     
     # Append results_t to the combined results
-    combined_results <- rbind(combined_results, results)
+    combined_results <- rbind(combined_results, results_t)
   }
   
   # Return the combined results

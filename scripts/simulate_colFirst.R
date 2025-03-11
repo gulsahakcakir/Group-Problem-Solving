@@ -78,10 +78,10 @@ results_list <- mclapply(1:nrow(comb2), function(i) {
            timeFirstCopy = row$copyTimes)
 }, mc.cores = num_cores)
 
-results <- bind_rows(results_list)
+results_t <- bind_rows(results_list)
 
 
 #remove JOBID part --> if not running in batches
-save(results, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
+save(results_t, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
 
 

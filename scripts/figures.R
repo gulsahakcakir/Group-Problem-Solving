@@ -283,5 +283,3 @@ collabFirstAve <- results_summary %>%
 fig7 <- collabFirstMax + collabFirstAve
 
 ggsave("figures/collabFirst.pdf", plot = fig7, width = 9, height = 3, family = "Times", pointsize = 12)
-
-dev.off()
