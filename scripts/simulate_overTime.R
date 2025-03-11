@@ -43,7 +43,7 @@ p = c(0, 0.1, 0.9, 1, 99)
 n_of_reps = 1000
 t = 1
 network_type = "full"
-problem_type = "simple" # should't this be c("simple", "complex")
+problem_type = c("simple", "complex")
 timeLimit = FALSE
 trackHistory = TRUE
 timeFirstCopy <- NA
@@ -75,11 +75,11 @@ results_list <- mclapply(1:nrow(comb2), function(i) {
            problem_type = row$problems)
 }, mc.cores = num_cores)
 
-results_t <- bind_rows(results_list)
+results <- bind_rows(results_list)
 
 
 #remove JOBID part --> if not running in batches
-save(results_t, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
+save(results, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
 
 
 

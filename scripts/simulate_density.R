@@ -39,7 +39,7 @@ n_of_agents <-16
 n_of_types <-100
 r <- 6
 p <- c(0, 1)
-n_of_reps <- 50
+n_of_reps <- 1000
 t <- 1
 network_type <- seq(0, 105, 5)
 problem_type <-  "complex"
@@ -73,11 +73,11 @@ results_list <- mclapply(1:nrow(comb2), function(i) {
            problem_type = row$problems)
 }, mc.cores = num_cores)
 
-results_d <- bind_rows(results_list)
+results <- bind_rows(results_list)
 
 
 #remove JOBID part --> if not running in batches
-save(results_d, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
+save(results, file = paste0("data/", title,"_r",r,"_types",n_of_types,"_timeLimit",timeLimit,t,"_", Sys.getenv("JOB_ID"), ".RData"))
 
 
 

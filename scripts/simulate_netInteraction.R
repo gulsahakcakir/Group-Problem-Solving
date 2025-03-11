@@ -41,7 +41,7 @@ n_of_types <- 100
 r <- 6
 p_step<-.1
 p <- seq(0,1, by=p_step)
-n_of_reps <- 10
+n_of_reps <- 1000
 t <- 1
 network_type = c("ring", "full")
 problem_type <- "complex"
