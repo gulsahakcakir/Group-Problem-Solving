@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article below."
+title: "Copy or collaborate? How networks impact collective problem solving"
+authors:
+  - family-names: Akçakır
+    given-names: Gülşah
+  - family-names: Lang
+    given-names: J. C.
+  - family-names: Lamberson
+    given-names: P. J.
+repository-code: "https://github.com/gulsahakcakir/Group-Problem-Solving"
+preferred-citation:
+  type: article
+  title: "Copy or collaborate? How networks impact collective problem solving"
+  authors:
+    - family-names: Akçakır
+      given-names: Gülşah
+    - family-names: Lang
+      given-names: J. C.
+    - family-names: Lamberson
+      given-names: P. J.
+  journal: "npj Complexity"
+  volume: 2
+  start: 35
+  year: 2025
+  doi: "10.1038/s44260-025-00058-8"
