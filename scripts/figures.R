@@ -9,7 +9,7 @@ source("scripts/combine_results.R") # function to combine results from multiple 
 # inputs: data_dir, files_pattern, batch_size=50 (default)
 # specify batch_size if other than 50
 data_dir <- "data"
-dir.create("figures", showWarnings = FALSE)
+dir.create("output", showWarnings = FALSE) # published versions are in figures/
 
 n_of_agents <- 16 # team size used in all simulations
 
@@ -101,7 +101,7 @@ if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4
 
   fig3 <- fig3_simple + fig3_complex
 
-  ggsave("figures/overTimeMax.pdf", plot = fig3, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/overTimeMax.pdf", plot = fig3, width = 9, height = 3, family = "Times", pointsize = 12)
 
 
   # Figure 4: Simple vs. Complex Landscapes - Average Ave Performance
@@ -130,7 +130,7 @@ if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4
 
   fig4 <- fig4_simple + fig4_complex
 
-  ggsave("figures/overTimeAve.pdf", plot = fig4, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/overTimeAve.pdf", plot = fig4, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
 ############################## Figures 5 and 6 #################################
@@ -190,7 +190,7 @@ if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figur
 
   fig5 <- fig5_max + fig5_avg
 
-  ggsave("figures/networkInteraction.pdf", plot = fig5, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/networkInteraction.pdf", plot = fig5, width = 9, height = 3, family = "Times", pointsize = 12)
 
   # Figure 6: Communication profile x Network structure - Worst member payoff and inequality (same runs as Figure 5)
   fairness_summary <- results %>% group_by(network, p_level, rep_no) %>%
@@ -238,7 +238,7 @@ if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figur
 
   fig6 <- fig6_min + fig6_gini
 
-  ggsave("figures/fairness.pdf", plot = fig6, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/fairness.pdf", plot = fig6, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
 ################################ Figure 7 ######################################
@@ -294,7 +294,7 @@ if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 7")) {
 
   fig7 <- fig7_copy + fig7_collaborate
 
-  ggsave("figures/density.pdf", plot = fig7, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/density.pdf", plot = fig7, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
 ################################ Figure 8 ######################################
@@ -358,5 +358,5 @@ if (has_data("collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData", "Figure 
 
   fig8 <- collabFirstMax + collabFirstAve
 
-  ggsave("figures/collabFirst.pdf", plot = fig8, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("output/collabFirst.pdf", plot = fig8, width = 9, height = 3, family = "Times", pointsize = 12)
 }
