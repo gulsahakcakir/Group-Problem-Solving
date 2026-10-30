@@ -5,7 +5,7 @@ authors:
   - family-names: Akçakır
     given-names: Gülşah
   - family-names: Lang
-    given-names: J. C.
+    given-names: John C.
   - family-names: Lamberson
     given-names: P. J.
 repository-code: "https://github.com/gulsahakcakir/Group-Problem-Solving"
@@ -16,7 +16,7 @@ preferred-citation:
     - family-names: Akçakır
       given-names: Gülşah
     - family-names: Lang
-      given-names: J. C.
+      given-names: John C.
     - family-names: Lamberson
       given-names: P. J.
   journal: "npj Complexity"
