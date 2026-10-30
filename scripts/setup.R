@@ -51,9 +51,10 @@ grid_size <- 100
 Grid <- tibble(expand.grid(x = c(1:grid_size), y = c(1:grid_size)))
 dist_matrix <- comp_dist(Grid)
 
-# Replications per job. The saved data were produced as batches of 50 reps per job
-# (combine_results() assumes batch_size = 50). Override with N_REPS for quick tests.
-n_of_reps <- as.integer(Sys.getenv("N_REPS", unset = "50"))
+# Replications per job (1000 runs per parameter combination, as in the paper).
+# The saved data were produced as 20 jobs of N_REPS=50 each; combine_results() assumes
+# batch_size = 50, so pass batch_size = N_REPS when combining batches of another size.
+n_of_reps <- as.integer(Sys.getenv("N_REPS", unset = "1000"))
 
 # Save results to data/<title>_r<r>_types<n_of_types>_timeLimit<timeLimit><t>_<job_id>.RData
 save_results <- function(results_t, title) {

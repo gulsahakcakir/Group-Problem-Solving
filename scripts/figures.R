@@ -1,4 +1,4 @@
-# Reproduce manuscript figures 3-7 from the simulation results in data/.
+# Reproduce manuscript figures 3-8 from the simulation results in data/.
 # Usage (from the repository root): Rscript scripts/figures.R
 # Figures whose data files are not present in data/ are skipped with a message.
 
@@ -20,13 +20,21 @@ has_data <- function(pattern, figure) {
   found
 }
 
+# Axis labels without leading or trailing zeros (e.g. .25, .5, 1)
+no_zero <- function(x) {
+  y <- sprintf('%.2f', x)
+  y <- sub("\\.?0+$", "", y)
+  y[x > 0 & x < 1] <- sub("^0", "", y[x > 0 & x < 1])
+  y[x == 0] <- "0"
+  y
+}
+
 ###################### Figures 3 and 4 ##########################
 if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4")) {
   # Parameters for over time plots
   n_of_types <- c(100)
   r <- 6
   p <- c("0", "0.1", "0.9", "1","Individual")
-  n_of_reps <- 1
   t <- 1
   network_type <- c("full")
   problem_type <- c("simple","complex")
@@ -36,7 +44,7 @@ if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4
   # Load simulation data
   files_pattern <- "overTime_r6_types100_timeLimitFALSE1_.*\\.RData"
 
-  results <- combine_results(data_dir, files_pattern) %>% select(-c("timeFirstCopy"))
+  results <- combine_results(data_dir, files_pattern) %>% select(-any_of(c("timeFirstCopy", "action")))
 
   # For independent problem solvers
   results$p_level<-as.character(results$p_level)
@@ -48,7 +56,7 @@ if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4
                          r = r,
                          n_of_types = n_of_types,
                          p_level = p,
-                         rep_no = 1:n_of_reps ,
+                         rep_no = 1:max(results$rep_no),
                          agent = 1:n_of_agents ,
                          tick_count = 0:max(results$tick_count))
   res_upd<- left_join(res_upd, results, by = c( "network","surface", "r","n_of_types", "p_level","rep_no","agent","tick_count"))
@@ -125,8 +133,8 @@ if (has_data("overTime_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 3 and 4
   ggsave("figures/overTimeAve.pdf", plot = fig4, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
-################################ Figure 5 ######################################
-if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 5")) {
+############################## Figures 5 and 6 #################################
+if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figures 5 and 6")) {
   # Load simulation data
   files_pattern <- "networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData"
   results <- combine_results(data_dir, files_pattern)
@@ -154,6 +162,7 @@ if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figur
                       ymax = avg_avg_payoff + se_avg_payoff),
                   width=0)+
     scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
+    scale_x_continuous(labels = no_zero)+
     guides(color = guide_legend(title = "Network"))+
     labs(
       x = "Probability of Collaborating",
@@ -170,6 +179,7 @@ if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figur
                       ymax = avg_max_payoff + se_max_payoff),
                   width=0)+
     scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
+    scale_x_continuous(labels = no_zero)+
     guides(color = "none")+
     theme(legend.position = "none")+
     labs(
@@ -181,10 +191,58 @@ if (has_data("networkInteraction_r6_types100_timeLimitFALSE1_.*\\.RData", "Figur
   fig5 <- fig5_max + fig5_avg
 
   ggsave("figures/networkInteraction.pdf", plot = fig5, width = 9, height = 3, family = "Times", pointsize = 12)
+
+  # Figure 6: Communication profile x Network structure - Worst member payoff and inequality (same runs as Figure 5)
+  fairness_summary <- results %>% group_by(network, p_level, rep_no) %>%
+    summarise(min_payoff = min(z),
+              gini_payoff = DescTools::Gini(z)) %>%
+    group_by(network, p_level) %>%
+    summarise(avg_min_payoff = mean(min_payoff),
+              se_min_payoff = sd(min_payoff) / sqrt(n()),
+              avg_gini_payoff = mean(gini_payoff),
+              se_gini_payoff = sd(gini_payoff) / sqrt(n()))
+
+  fig6_min <- fairness_summary %>%
+    ggplot(aes(x = p_level, y = avg_min_payoff, colour = network, group = network)) +
+    geom_line() +
+    geom_point() +
+    geom_errorbar(aes(y = avg_min_payoff,
+                      ymin = avg_min_payoff - se_min_payoff,
+                      ymax = avg_min_payoff + se_min_payoff),
+                  width=0)+
+    scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
+    scale_x_continuous(labels = no_zero)+
+    guides(color = "none")+
+    labs(
+      x = "Probability of Collaborating",
+      y= "Worst member payoff")+
+    theme_classic()+
+    theme(axis.text.y = element_text(margin = margin(r = 8)))
+
+  fig6_gini <- fairness_summary %>%
+    ggplot(aes(x = p_level, y = avg_gini_payoff, colour = network, group = network)) +
+    geom_line() +
+    geom_point() +
+    geom_errorbar(aes(y = avg_gini_payoff,
+                      ymin = avg_gini_payoff - se_gini_payoff,
+                      ymax = avg_gini_payoff + se_gini_payoff),
+                  width=0)+
+    scale_color_manual(values = c( "#440154", "#5ec962"), labels = c("Fully connected", "Linear")) +
+    scale_x_continuous(labels = no_zero)+
+    guides(color = guide_legend(title = "Network"))+
+    labs(
+      x = "Probability of Collaborating",
+      y= "Gini coefficient")+
+    theme_classic()+
+    theme(axis.text.y = element_text(margin = margin(r = 8)))
+
+  fig6 <- fig6_min + fig6_gini
+
+  ggsave("figures/fairness.pdf", plot = fig6, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
-################################ Figure 6 ######################################
-if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 6")) {
+################################ Figure 7 ######################################
+if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 7")) {
   # Load simulation data
   files_pattern <- "density_r6_types100_timeLimitFALSE1_.*\\.RData"
   results <- combine_results(data_dir, files_pattern)
@@ -203,8 +261,8 @@ if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 6")) {
               percent_found_peak = mean(found_peak)) %>%
     mutate(density = 2 * (n_of_agents-1+network) / (n_of_agents*(n_of_agents-1))) # density = 2*E/n(n-1)
 
-  # Figure 6: Copy v Collaborate by Network density - Average performance
-  fig6_copy <- results_summary %>% filter(p_level==0) %>%
+  # Figure 7: Copy v Collaborate by Network density - Average performance
+  fig7_copy <- results_summary %>% filter(p_level==0) %>%
     ggplot(aes(x = density, y = avg_avg_payoff)) +
     geom_line()+
     geom_point() +
@@ -219,7 +277,7 @@ if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 6")) {
     theme_classic()+
     theme(axis.text.y = element_text(margin = margin(r = 8)))
 
-  fig6_collaborate <- results_summary %>% filter(p_level==1) %>%
+  fig7_collaborate <- results_summary %>% filter(p_level==1) %>%
     ggplot(aes(x = density, y = avg_avg_payoff)) +
     geom_line()+
     geom_point()+
@@ -232,16 +290,15 @@ if (has_data("density_r6_types100_timeLimitFALSE1_.*\\.RData", "Figure 6")) {
     guides(linetype = "none")+
     theme(legend.position="none")+
     theme_classic()+
-    ylim(45,49)+
     theme(axis.text.y = element_text(margin = margin(r = 8)))
 
-  fig6 <- fig6_copy + fig6_collaborate
+  fig7 <- fig7_copy + fig7_collaborate
 
-  ggsave("figures/density.pdf", plot = fig6, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("figures/density.pdf", plot = fig7, width = 9, height = 3, family = "Times", pointsize = 12)
 }
 
-################################ Figure 7 ######################################
-if (has_data("collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData", "Figure 7")) {
+################################ Figure 8 ######################################
+if (has_data("collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData", "Figure 8")) {
   # Load simulation data
   files_pattern <- "collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData"
   results <- combine_results(data_dir, files_pattern)
@@ -260,7 +317,7 @@ if (has_data("collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData", "Figure 
               percent_found_peak = mean(found_peak))
 
 
-  # Figure 7: # of rounds of collaboration x Network structure - Avg and Max Performances
+  # Figure 8: # of rounds of collaboration x Network structure - Avg and Max Performances
   collabFirstMax <- results_summary %>%
     ggplot(aes(x = timeFirstCopy, y = avg_max_payoff, colour = network, group = network)) +
     geom_line() +
@@ -299,7 +356,7 @@ if (has_data("collaborateFirst_r6_types100_timeLimitTRUE10_.*\\.RData", "Figure 
     theme_classic()+
     theme(axis.text.y = element_text(margin = margin(r = 8)))
 
-  fig7 <- collabFirstMax + collabFirstAve
+  fig8 <- collabFirstMax + collabFirstAve
 
-  ggsave("figures/collabFirst.pdf", plot = fig7, width = 9, height = 3, family = "Times", pointsize = 12)
+  ggsave("figures/collabFirst.pdf", plot = fig8, width = 9, height = 3, family = "Times", pointsize = 12)
 }

@@ -4,7 +4,9 @@ Code and data for:
 
 > Akçakır, G., Lang, J. C. & Lamberson, P. J. Copy or collaborate? How networks impact collective problem solving. *npj Complexity* **2**, 35 (2025). https://doi.org/10.1038/s44260-025-00058-8
 
-This repository contains an agent-based model of teams searching a fitness landscape. In each time step, every agent either **copies** (looks at its network neighbours' current solutions) or **collaborates** (searches nearby solutions using its neighbours' skill types), and moves to the best payoff it can see. The scripts reproduce the simulation results and Figures 3–7 of the paper.
+This repository contains an agent-based model of teams searching a fitness landscape. In each time step, every agent either **copies** (looks at its network neighbours' current solutions) or **collaborates** (searches nearby solutions using its neighbours' skill types), and moves to the best payoff it can see. The scripts reproduce the simulation results and Figures 3–8 of the paper.
+
+All main-text simulations use group size n = 16, s = 100 skill types, skill radius r = 6, and a 100 × 100 Mason–Watts landscape. Figures 3–7 run until the first time step in which no agent moves; Figure 8 runs for 10 time steps.
 
 ## Repository layout
 
@@ -16,29 +18,31 @@ scripts/
   networks.R                 team networks (linear, fully connected, linear + random edges)
   distances.R                pairwise distances between grid cells
   combine_results.R          combines result batches from data/
-  simulate_overTime.R        Figures 3 and 4
-  simulate_netInteraction.R  Figure 5
-  simulate_density.R         Figure 6
-  simulate_colFirst.R        Figure 7
-  figures.R                  builds Figures 3–7 from data/
-data/                        simulation results (.RData, one file per batch of 50 replications)
+  simulate_overTime.R        data for Figures 3 and 4
+  simulate_netInteraction.R  data for Figures 5 and 6
+  simulate_density.R         data for Figure 7
+  simulate_colFirst.R        data for Figure 8
+  figures.R                  builds Figures 3–8 from data/
+data/                        simulation results (.RData)
 figures/                     figure PDFs
 ```
 
 ## Requirements
 
-R (tested with 4.3.2) and the following packages:
+R and the packages below. The versions listed are the ones used to regenerate the figures in `figures/`; the original simulations were run on a computing cluster.
 
-| Package    | Tested version |
-|------------|----------------|
-| tidyverse  | 2.0.0          |
-| igraph     | 2.1.2          |
-| akima      | 0.6.3.4        |
-| patchwork  | 1.2.0          |
-| zoo        | 1.8.12         |
+| Package    | Version  |
+|------------|----------|
+| R          | 4.3.2    |
+| tidyverse  | 2.0.0    |
+| igraph     | 2.1.2    |
+| akima      | 0.6.3.4  |
+| patchwork  | 1.2.0    |
+| zoo        | 1.8.12   |
+| DescTools  | 0.99.60  |
 
 ```r
-install.packages(c("tidyverse", "igraph", "akima", "patchwork", "zoo"))
+install.packages(c("tidyverse", "igraph", "akima", "patchwork", "zoo", "DescTools"))
 ```
 
 ## Reproducing the figures
@@ -51,39 +55,51 @@ Rscript scripts/figures.R
 
 This reads the result files in `data/` and writes the PDFs to `figures/`:
 
-| Figure | Script that generates the data | Data files in `data/` | Output |
-|--------|-------------------------------|-----------------------|--------|
-| 3, 4 | `simulate_overTime.R` | `overTime_r6_types100_timeLimitFALSE1_*.RData` | `overTimeMax.pdf`, `overTimeAve.pdf` |
-| 5 | `simulate_netInteraction.R` | `networkInteraction_r6_types100_timeLimitFALSE1_*.RData` | `networkInteraction.pdf` |
-| 6 | `simulate_density.R` | `density_r6_types100_timeLimitFALSE1_*.RData` | `density.pdf` |
-| 7 | `simulate_colFirst.R` | `collaborateFirst_r6_types100_timeLimitTRUE10_*.RData` | `collabFirst.pdf` |
+| Figure | Content | Data script | Data files in `data/` | Output |
+|--------|---------|-------------|-----------------------|--------|
+| 3 | Best member payoff over time | `simulate_overTime.R` | `overTime_r6_types100_timeLimitFALSE1_*.RData` | `overTimeMax.pdf` |
+| 4 | Average payoff over time | `simulate_overTime.R` | same as Figure 3 | `overTimeAve.pdf` |
+| 5 | Best member and average payoff vs. p | `simulate_netInteraction.R` | `networkInteraction_r6_types100_timeLimitFALSE1_*.RData` | `networkInteraction.pdf` |
+| 6 | Worst member payoff and Gini coefficient vs. p | `simulate_netInteraction.R` | same as Figure 5 | `fairness.pdf` |
+| 7 | Average payoff vs. network density | `simulate_density.R` | `density_r6_types100_timeLimitFALSE1_*.RData` | `density.pdf` |
+| 8 | Collaborate for k rounds, then copy | `simulate_colFirst.R` | `collaborateFirst_r6_types100_timeLimitTRUE10_*.RData` | `collabFirst.pdf` |
 
-If the data for a figure is not in `data/`, `figures.R` skips that figure and prints a message.
+Each data set holds 1,000 simulation runs per parameter combination, stored as 20 batch files of 50 runs each (one file per cluster job, named by job ID). If the data for a figure is not in `data/`, `figures.R` skips that figure and prints a message.
 
 ## Rerunning the simulations
 
-Each `simulate_*.R` script runs one batch of replications for every parameter combination and saves it to `data/`.
+Each `simulate_*.R` script runs all parameter combinations for its figure and saves the results to `data/`.
 
 ```bash
 Rscript scripts/simulate_netInteraction.R
 ```
 
-The results in `data/` were produced on an SGE cluster as independent jobs of 50 replications each (for example, 20 jobs for 1,000 replications). The scripts read these environment variables:
+The scripts read these environment variables:
 
 | Variable | Meaning | Default |
 |----------|---------|---------|
-| `N_REPS` | replications per job | `50` |
+| `N_REPS` | runs per parameter combination in this job | `1000` |
 | `NSLOTS` | cores used by `mclapply` (set by SGE) | `1` |
 | `JOB_ID` | added to the output file name (set by SGE) | empty |
 | `SEED`   | master random seed | `JOB_ID`, or `2025` when running locally |
 
-Runs with the same `SEED` and `N_REPS` produce identical results. Every replication also stores its own seed in the `rand_seed` column. A quick local test:
+The data in `data/` were produced as 20 cluster jobs with `N_REPS=50`. When combining batches of a different size, pass `batch_size = N_REPS` to `combine_results()`. Runs with the same `SEED` and `N_REPS` produce identical results, and every run also stores its own seed in the `rand_seed` column. A quick local test:
 
 ```bash
 N_REPS=1 Rscript scripts/simulate_colFirst.R
 ```
 
-A full batch is slow; the cluster runs used several cores per job.
+## Notes on the published figures
+
+The figures in this repository use 1,000 runs per data point for every figure, as stated in the paper's captions. A few of the figures as published were drawn from a different number of runs from the same simulations:
+
+- Figures 3 and 4 were drawn from the first batch file only (50 runs).
+- Figure 5 was drawn from 2,000 runs: the 1,000 runs here plus a second set of 20 batches.
+- Figure 7 was drawn from 3,800 runs: the 1,000 runs here plus a further 56 batches.
+
+The qualitative results are the same in both versions.
+
+The over-time data files were renamed from `r6_types100_timeLimitFALSE1_pStepNA_trackHistoryTRUE_*` to `overTime_r6_types100_timeLimitFALSE1_*` to match the simulation scripts. They also contain an `action` column, which `figures.R` ignores.
 
 ## Citation
 
